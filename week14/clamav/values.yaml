@@ -1,0 +1,10 @@
+environment: development
+container:
+  name: my-clamav
+  port: 9000
+  image: niilo/clamav-rest
+  tag: latest
+replicas: 4
+service:
+  nodeport: 30080
+namespace: default

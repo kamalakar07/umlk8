@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-nginx
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: test-nginx
+  replicas: 3
+  template:
+    metadata:
+      name: task-config-pod
+      labels:
+        app: test-nginx
+    spec:
+      containers:
+        - name: task-config-container
+          image: nginx
+          env:
+            - name: TESTMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: test-nginx-config
+                  key: testmode           
+          ports:
+            - containerPort: 80

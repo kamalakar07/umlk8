@@ -1,0 +1,23 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: production
+  name: prod-everything
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: prod-all-access
+  namespace: production
+subjects:
+- apiGroup: ""
+  kind: User
+  name: Production
+roleRef:
+  apiGroup: ""
+  kind: Role
+  name: prod-everything

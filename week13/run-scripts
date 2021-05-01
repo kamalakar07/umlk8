@@ -1,0 +1,118 @@
+#! /bin/bash
+
+# Create users
+chmod +x create-user
+echo "Creating Dev User..."
+./create-user Dev
+echo ""
+echo "Creating Test User..."
+./create-user Test
+echo ""
+echo "Creating Production User..."
+./create-user Production
+
+# Create Namespace
+echo ""
+echo "Creating Namespace test..."
+kubectl create namespace test
+echo ""
+echo "Creating Namespace production..."
+kubectl create namespace production
+
+echo ""
+echo "Changing Test-context to use test namespace..."
+kubectl config set-context Test-context --namespace=test --cluster=kubernetes  --user=Test
+
+echo ""
+echo "Changing Production-context to use production namespace..."
+kubectl config set-context Production-context --namespace=production --cluster=kubernetes  --user=Production
+
+#view config  
+echo "view config file..."
+kubectl config view 
+
+#create role bindings
+echo ""
+echo "Adding access to Test User..."
+kubectl apply -f test-role-and-binding.yaml
+echo ""
+echo "Adding access to Production User..."
+kubectl apply -f production-role-and-binding.yaml
+echo ""
+echo "Adding access to Dev User..."
+kubectl apply -f dev-cluster-role-and-binding.yaml
+
+#Create persistent Volume
+echo ""
+echo "Creating Pesistent Volume..."
+kubectl apply -f pv-volume.yaml
+echo ""
+echo "get Pesistent Volume details..."
+kubectl get pv task-pv-volume
+
+#Create PV Claim
+echo ""
+echo "Creating PV Claim..."
+kubectl apply -f pv-claim.yaml
+echo ""
+echo "Get PV Claim details..."
+kubectl get pvc task-pv-claim --namespace=production
+
+#Create nginx deployment in production namespace
+echo ""
+echo "Creating nginx deployment in production namespace..."
+kubectl apply -f prod-nginx-deployment.yaml
+echo ""
+echo "Getting pods from production namespace..."
+kubectl get pods --namespace=production
+
+#Create index.html file on node to be used by nginx server
+echo ""
+echo "SSH to node01 and index.html file in /mnt/data directory ..."
+ssh node01 "mkdir -p /mnt/data"
+ssh node01 "echo 'Hello from Kubernetes storage' > /mnt/data/index.html"
+
+#kubectl exec -it --namespace=production prod-nginx-6c6695446d-lnddn -- /bin/bash
+#cd /usr/share/nginx/html
+#cat index.html
+
+#Create service for prod deployment. expose node port 30080.
+echo ""
+echo "create service for prod-nginx deployment. Expose Node port 30080"
+kubectl apply -f svc-prod-nginx.yaml
+
+#Hit default page of nginx webserver at nodeport 30080
+echo ""
+echo "Getting contents from prod nginx default webpage"
+curl localhost:30080
+
+#Create Config map in test namespace
+echo ""
+echo "Creating Config map in test namespace ..."
+kubectl apply -f test-config-map.yaml
+
+#Display Config Map
+echo ""
+echo "Display config map details"
+kubectl describe configmap/test-nginx-config --namespace=test
+
+#Create nginx deployment in test namespace
+echo ""
+echo "Creating nginx deployment in test namespace..."
+kubectl apply -f test-nginx-deployment.yaml
+
+#display pods from test deployment
+echo ""
+echo "Getting pods from test namespace..."
+kubectl get pods --namespace=test
+
+#kubectl exec -it --namespace=test test-nginx-64c78cdc88-ws85l  -- /bin/bash
+#echo $TESTMODE
+
+
+#kubectl apply -f svc-test-nginx.yaml
+#kubectl describe deployment test-nginx --namespace=test
+
+#Clean up stuff
+#kubectl delete deploy test-nginx  --namespace=test
+#kubectl delete deploy prod-nginx --namespace=production

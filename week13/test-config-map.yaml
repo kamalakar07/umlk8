@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-nginx-config
+  namespace: test
+data:
+  testmode: "1"

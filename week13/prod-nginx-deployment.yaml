@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prod-nginx
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: prod-nginx
+  replicas: 3
+  template:
+    metadata:
+      name: task-pv-pod
+      labels:
+        app: prod-nginx
+    spec:
+      volumes:
+        - name: task-pv-storage
+          persistentVolumeClaim:
+            claimName: task-pv-claim
+      containers:
+        - name: task-pv-container
+          image: nginx
+          ports:
+            - containerPort: 80
+              name: "http-server"
+          volumeMounts:
+            - mountPath: "/usr/share/nginx/html"
+              name: task-pv-storage

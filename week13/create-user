@@ -1,0 +1,23 @@
+#!/bin/bash 
+if [ "$#" -ne 1 ]; then
+    echo "usage : create-user username"
+else
+
+	declare -x K8S_USER=$1
+	
+	#Create a client key
+	openssl genrsa -out ${K8S_USER}.key 2048
+	
+	#Create a certificate signing request (CSR)
+	openssl req -new -key ${K8S_USER}.key -out ${K8S_USER}.csr -subj "/CN=${K8S_USER}"
+	
+	#Sign the request using the cluster’s certificate and key (the “root” privileges) located in /etc/
+	openssl x509 -req -in ${K8S_USER}.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out ${K8S_USER}.crt -days 300
+	
+	#Add the new user’s credential to the kubeconfig configuration file
+	kubectl config set-credentials ${K8S_USER} --client-certificate=${K8S_USER}.crt --client-key=${K8S_USER}.key
+	
+	#Create the UML user context
+	kubectl config set-context ${K8S_USER}-context --cluster=kubernetes --user=${K8S_USER}
+
+fi
